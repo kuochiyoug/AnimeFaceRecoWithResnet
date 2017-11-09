@@ -1,5 +1,8 @@
 from model.Resnet import ResNet
 
+#from __future__ import print_function
+import argparse
+
 import chainer
 from chainer import cuda
 from chainer import optimizers
@@ -11,19 +14,45 @@ import six
 from six.moves import queue
 from chainer import serializers
 
+import chainer.datasets as datasets
 from chainer.datasets import tuple_dataset
 from PIL import Image
 import numpy as np
 import glob,os
 
+parser = argparse.ArgumentParser(description='Chainer CIFAR example:')
+parser.add_argument('--dataset', '-d', default='/home/koma/dataset/animeface-character-dataset/thumb/',
+                help='The path of dataset')
+parser.add_argument('--batchsize', '-b', type=int, default=64,
+                help='Number of images in each mini-batch')
+#parser.add_argument('--learnrate', '-l', type=float, default=0.05, help='Learning rate for SGD')
+parser.add_argument('--alpha1',  type=float, default=0.005, help='Learning rate for SGD')
+parser.add_argument('--epoch', '-e', type=int, default=300,
+                help='Number of sweeps over the dataset to train')
+parser.add_argument('--gpu', '-g', type=int, default=0,
+                help='GPU ID (negative value indicates CPU)')
+parser.add_argument('--out', '-o', default='result',
+                help='Directory to output the result')
+parser.add_argument('--resume', '-r', default='',
+                help='Resume the training from snapshot')
+args = parser.parse_args()
 
-def data_manage_animefacedata(data_path="/home/koma/dataset/animeface-character-dataset/thumb/",in_size=224):
+print('GPU: {}'.format(args.gpu))
+print('# Minibatch-size: {}'.format(args.batchsize))
+print('# epoch: {}'.format(args.epoch))
+print('')
+
+# Set up a neural network to train.
+# Classifier reports softmax cross entropy loss and accuracy at every
+# iteration, which will be used by the PrintReport extension below.
+
+
+
+def data_manage_animefacedata(data_path,in_size=224):
     #Data path setup
    
     #data_path = "/home/koma/dataset/animeface-character-dataset/thumb/"
     #test_data_path = "/data/test/"
-    
-    #folders = glob.glob(data_path+"*")
     folders = sorted(os.listdir(data_path))
     cats = []#Categorys list
     all_data = []
@@ -60,23 +89,28 @@ def data_manage_animefacedata(data_path="/home/koma/dataset/animeface-character-
     test  = tuple_dataset.TupleDataset(imageData[threshold:],  labelData[threshold:])
     return train,test
 
-    
+ 
+   
 #Check cuda environment and setup models
-cuda.check_cuda_available()
 
 model = ResNet()
-cuda.get_device(0).use()
-model.to_gpu(0)
-print("Model Ready with GPU")
+
+if args.gpu >= 0:
+    cuda.check_cuda_available()
+    cuda.get_device(0).use()
+    model.to_gpu(0)
+    print("Model Ready with GPU")
+else:
+    print("Model Ready with CPU")
 
 #Setup optimizer
-optimizer = optimizers.Adam(alpha=0.0002, beta1=0.5)
+optimizer = optimizers.Adam(alpha=args.alpha1, beta1=0.5)
 optimizer.setup(model)
 optimizer.add_hook(chainer.optimizer.WeightDecay(0.00001))
 print("Optimizer Sets!")
 
 #Setup train data and test data
-train, test = data_manage_animefacedata()
+train, test = data_manage_animefacedata(args.dataset)
 train_iter = chainer.iterators.SerialIterator(train,20)
 test_iter = chainer.iterators.SerialIterator(test,10,repeat=False,shuffle=False)
 print("Data Loaded!")
@@ -87,11 +121,10 @@ print("Data Loaded!")
 
 sum_accuracy = 0
 sum_loss = 0
-epochnum = 10
+epochnum = args.epoch
 
 train_count = len(train)
 test_count = len(test)
-#while(train_iter.epoch < args.epoch):
 while(train_iter.epoch < epochnum):
     batch = train_iter.next()
     #print len(batch)
@@ -102,8 +135,7 @@ while(train_iter.epoch < epochnum):
     #   optimizer.lr *= 0.5
     #   print('Reducing learning rate to: ', optimizer.lr)
 
-    #x_array, t_array = convert.concat_examples(batch, args.gpu)
-    x_array, t_array = convert.concat_examples(batch, 0)
+    x_array, t_array = convert.concat_examples(batch, args.gpu)
     x = chainer.Variable(x_array)
     t = chainer.Variable(t_array)
     optimizer.update(model, x, t)
@@ -119,7 +151,7 @@ while(train_iter.epoch < epochnum):
         sum_loss = 0
         #model.predictor.train = False
         for batch in test_iter:
-            x_array, t_array = convert.concat_examples(batch, 0)
+            x_array, t_array = convert.concat_examples(batch, args.gpu)
             x = chainer.Variable(x_array)
             t = chainer.Variable(t_array)
             loss = model(x, t)
