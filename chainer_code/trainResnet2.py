@@ -59,7 +59,7 @@ def data_manage_animefacedata(data_path,in_size=224):
             for imgfile in img_filelist:
                 all_data.append([imgfile,label])
     print("labels="+str(len(cats)))
-    
+
     all_data = np.random.permutation(all_data) #Random the rank
 
     imageData = []
@@ -75,14 +75,14 @@ def data_manage_animefacedata(data_path,in_size=224):
         img = np.reshape(img,(3,in_size,in_size))
         imageData.append(img)
         labelData.append(np.int32(label_id))
-    
+
     threshold = np.int32(len(imageData)/8*7)
     train = tuple_dataset.TupleDataset(imageData[0:threshold], labelData[0:threshold])
     test  = tuple_dataset.TupleDataset(imageData[threshold:],  labelData[threshold:])
     return train,test
 
- 
-   
+
+
 #Check cuda environment and setup models
 
 model = ResNet()
@@ -137,9 +137,21 @@ trainer.extend(extensions.Evaluator(test_iter, model, device=args.gpu))
 """
 def lr_drop(trainer):
     trainer.updater.get_optimizer('main').lr *= lr_drop_ratio
-
 trainer.extend(
     lr_drop,
     trigger=triggers.ManualScheduleTrigger(lr_drop_epoch, 'epoch'))
 """
 trainer.run()
+
+"""
+updater = training.StandardUpdater(train_iter, optimizer,device=0)
+trainer = training.Trainer(updater, (101, 'epoch'), out="result")
+trainer.extend(extensions.Evaluator(test_iter, model, device=0))
+#trainer.extend(extensions.dump_graph(root_name=))
+trainer.extend(extensions.snapshot(), trigger=(10, 'epoch'))
+trainer.extend(extensions.LogReport())
+trainer.extend(extensions.PrintReport(['epoch', 'main/loss', 'validation/main/loss',
+ 'main/accuracy', 'validation/main/accuracy']))
+trainer.extend(extensions.ProgressBar())
+trainer.run()
+"""
