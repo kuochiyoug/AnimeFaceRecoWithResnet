@@ -5,11 +5,7 @@ import chainer
 import chainer.links as L
 import chainer.functions as F
 
-
-# In[2]:
-
-
-#Define small blocks in residual net      
+#Define small blocks in residual net
 class BottleNeckA(chainer.Chain):
     def __init__(self, in_size, ch, out_size, stride=2):
         w = math.sqrt(2)
@@ -33,7 +29,7 @@ class BottleNeckA(chainer.Chain):
 
         return F.relu(h1 + h2)
 
-        
+
 class BottleNeckB(chainer.Chain):
     def __init__(self, in_size, ch):
         w = math.sqrt(2)
@@ -53,7 +49,7 @@ class BottleNeckB(chainer.Chain):
 
         return F.relu(h + x)
 
-    
+
 class Block(chainer.Chain):
     def __init__(self, layer, in_size, ch, out_size, stride=2):
         super(Block, self).__init__()
@@ -73,9 +69,7 @@ class Block(chainer.Chain):
         return x
 
 class ResNet(chainer.Chain):
-
     insize = 224
-
     def __init__(self):
         w = math.sqrt(2)
         super(ResNet, self).__init__(
@@ -110,4 +104,3 @@ class ResNet(chainer.Chain):
             return self.loss
         else:
             return h
-
