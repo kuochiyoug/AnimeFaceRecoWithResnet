@@ -1,5 +1,5 @@
 from model.Resnet import ResNet
-
+from IPython.terminal.debugger import set_trace as keyboard
 #from __future__ import print_function
 import argparse
 
@@ -50,7 +50,7 @@ print('')
 
 def data_manage_animefacedata(data_path,in_size=224):
     #Data path setup
-   
+
     #data_path = "/home/koma/dataset/animeface-character-dataset/thumb/"
     #test_data_path = "/data/test/"
     folders = sorted(os.listdir(data_path))
@@ -67,9 +67,9 @@ def data_manage_animefacedata(data_path,in_size=224):
             for imgfile in img_filelist:
                 all_data.append([imgfile,label])
     print("labels="+str(len(cats)))
-    
+
     all_data = np.random.permutation(all_data) #Random the rank
-            
+
     imageData = []
     labelData = []
     for PathAndLabel in all_data:
@@ -78,23 +78,22 @@ def data_manage_animefacedata(data_path,in_size=224):
         label_id = cats.index(PathAndLabel[1])
         #print PathAndLabel[1]
         img = np.asarray(np.float32(img))
-        if img.shape[2] != 3:
-            continue
-        img = np.reshape(img,(3,in_size,in_size))
+        img = img.transpose(2,0,1)
+        img = img[:3, ...]
+        #img = np.reshape(img,(3,in_size,in_size))
         imageData.append(img)
         labelData.append(np.int32(label_id))
-    
+
     threshold = np.int32(len(imageData)/8*7)
     train = tuple_dataset.TupleDataset(imageData[0:threshold], labelData[0:threshold])
     test  = tuple_dataset.TupleDataset(imageData[threshold:],  labelData[threshold:])
     return train,test
 
- 
-   
-#Check cuda environment and setup models
+
 
 model = ResNet()
 
+#Check cuda environment and setup models
 if args.gpu >= 0:
     cuda.check_cuda_available()
     cuda.get_device(0).use()
@@ -116,8 +115,6 @@ test_iter = chainer.iterators.SerialIterator(test,10,repeat=False,shuffle=False)
 print("Data Loaded!")
 
 
-# In[ ]:
-
 
 sum_accuracy = 0
 sum_loss = 0
@@ -125,11 +122,10 @@ epochnum = args.epoch
 
 train_count = len(train)
 test_count = len(test)
+iteration = 0
 while(train_iter.epoch < epochnum):
     batch = train_iter.next()
     #print len(batch)
-    print('train mean loss: {}, accuracy: {}'.format(
-            sum_loss / train_count, sum_accuracy / train_count))
     # Reduce learning rate by 0.5 every 25 epochs.
     #if train_iter.epoch % 25 == 0 and train_iter.is_new_epoch:
     #   optimizer.lr *= 0.5
@@ -139,27 +135,35 @@ while(train_iter.epoch < epochnum):
     x = chainer.Variable(x_array)
     t = chainer.Variable(t_array)
     optimizer.update(model, x, t)
+
+
+    print('iter:{}, loss: {}, accuracy: {}%'.format(
+            iteration,model.loss.data,int(model.accuracy.data*100)))
+
     sum_loss += float(model.loss.data) * len(t.data)
     sum_accuracy += float(model.accuracy.data) * len(t.data)
-    
+    #keyboard()
+
     if train_iter.is_new_epoch:
+    #if True:
         print('epoch: ', train_iter.epoch)
         print('train mean loss: {}, accuracy: {}'.format(
             sum_loss / train_count, sum_accuracy / train_count))
         # evaluation
         sum_accuracy = 0
         sum_loss = 0
-        #model.predictor.train = False
+        #keyboard()
+        #model.train = False
         for batch in test_iter:
             x_array, t_array = convert.concat_examples(batch, args.gpu)
-            x = chainer.Variable(x_array)
-            t = chainer.Variable(t_array)
-            loss = model(x, t)
-            sum_loss += float(loss.data) * len(t.data)
-            sum_accuracy += float(model.accuracy.data) * len(t.data)
+            x_test = chainer.Variable(x_array)
+            t_test = chainer.Variable(t_array)
+            loss_test = model(x_test, t_test)
+            sum_loss += float(loss_test.data) * len(t_test.data)
+            sum_accuracy += float(model.accuracy.data) * len(t_test.data)
 
         test_iter.reset()
-        #model.predictor.train = True
+        #model.train = True
         print('test mean  loss: {}, accuracy: {}'.format(
             sum_loss / test_count, sum_accuracy / test_count))
         sum_accuracy = 0
@@ -171,15 +175,4 @@ while(train_iter.epoch < epochnum):
         print('save the optimizer')
         serializers.save_npz('mlp.state', optimizer)
 
-"""
-updater = training.StandardUpdater(train_iter, optimizer,device=0)
-trainer = training.Trainer(updater, (101, 'epoch'), out="result")
-trainer.extend(extensions.Evaluator(test_iter, model, device=0))
-#trainer.extend(extensions.dump_graph(root_name=))
-trainer.extend(extensions.snapshot(), trigger=(10, 'epoch'))
-trainer.extend(extensions.LogReport())
-trainer.extend(extensions.PrintReport(['epoch', 'main/loss', 'validation/main/loss',
- 'main/accuracy', 'validation/main/accuracy']))
-trainer.extend(extensions.ProgressBar())
-trainer.run()
-"""
+    iteration += 1
