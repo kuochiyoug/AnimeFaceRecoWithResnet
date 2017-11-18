@@ -4,11 +4,9 @@ import os, glob
 import numpy as np
 from tensorflow.python.framework import ops
 from tensorflow.python.framework import dtypes
-from model.Resnet import ResNet
 from PIL import Image
+from model.Resnet import ResNet
 
-#filename_queue = tf.train.string_input_producer(
-#tf.train.match_filenames_once("/home/baxter/dataset/animeface/animeface-character-dataset/thumb/*/*.png"))
 
 
 def read_labeled_image_list_file(image_list_file):
@@ -134,9 +132,16 @@ image_batch, label_batch = tf.train.batch([image, label],
 model = ResNet(name='ResNet',in_channels=3,seed=seed)
 model.train = True
 
-
+cfg = dict({
+            'allow_soft_placement': False,
+            'log_device_placement': True,
+            'gpu_options': tf.GPUOptions()
+        })
+config = tf.ConfigProto(**cfg)
+#config.gpu_options.allow_growth = True
+config.gpu_options.per_process_gpu_memory_fraction = 0.4
 #keyborad()
-with tf.device('/cpu:0'):
+with tf.device('/gpu:0'):
     pred_batch = model(image_batch)
     loss_tf = tf.losses.softmax_cross_entropy(label_batch,pred_batch)
     #accuracy_tf = tf.metrics.accuracy(label,pred_batch)
@@ -147,15 +152,16 @@ with tf.device('/cpu:0'):
 
 
 
-with tf.Session() as sess: 
-    sess.run(tf.global_variables_initializer())
-    sess.run(tf.local_variables_initializer())
-    coord = tf.train.Coordinator()
-    threads = tf.train.start_queue_runners(coord=coord)
-    for i in range(10000):
-        _,loss= sess.run([train_op,loss_tf])
-        print i, loss
-        #imgplot = plt.imshow(final_image[0])
+with tf.Session(config = config) as sess:
+    with tf.device('/device:gpu:0'):
+        sess.run(tf.global_variables_initializer())
+        sess.run(tf.local_variables_initializer())
+        coord = tf.train.Coordinator()
+        threads = tf.train.start_queue_runners(coord=coord)
+        for i in range(10000):
+            _,loss= sess.run([train_op,loss_tf])
+            print i, loss
+            #imgplot = plt.imshow(final_image[0])
 
-    coord.request_stop()
-    coord.join(threads)
+        coord.request_stop()
+        coord.join(threads)
