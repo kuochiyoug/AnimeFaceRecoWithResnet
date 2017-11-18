@@ -5,6 +5,10 @@ from .links.Convolution2D import Convolution2D
 from .links.BatchNormalization import BatchNormalization
 from .links.Linear import Linear
 
+
+
+
+
 class ResNet(BaseModel):
     """
     This is the 6CNN3L.
