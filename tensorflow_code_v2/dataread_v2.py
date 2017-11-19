@@ -153,15 +153,16 @@ with tf.device('/gpu:0'):
 
 
 with tf.Session(config = config) as sess:
-    with tf.device('/device:gpu:0'):
-        sess.run(tf.global_variables_initializer())
-        sess.run(tf.local_variables_initializer())
-        coord = tf.train.Coordinator()
-        threads = tf.train.start_queue_runners(coord=coord)
-        for i in range(10000):
-            _,loss= sess.run([train_op,loss_tf])
-            print i, loss
-            #imgplot = plt.imshow(final_image[0])
+    sess.run(tf.global_variables_initializer())
+    sess.run(tf.local_variables_initializer())
+    coord = tf.train.Coordinator()
+    threads = tf.train.start_queue_runners(coord=coord)
+    print("iter loss accuracy")
+    print("="*20)
+    for i in range(10000):
+        _,loss= sess.run([train_op,loss_tf])
+        print i, loss
+        #imgplot = plt.imshow(final_image[0])
 
-        coord.request_stop()
-        coord.join(threads)
+    coord.request_stop()
+    coord.join(threads)
