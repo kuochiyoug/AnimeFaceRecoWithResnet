@@ -105,3 +105,5 @@ ENV/
 *.state
 
 *.py~
+
+pytorch/data/
