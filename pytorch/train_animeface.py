@@ -54,6 +54,8 @@ transform_test = transforms.Compose([
 trainset = torchvision.datasets.ImageFolder(root='/home/koma/dataset/animeface/animeface-character-dataset/thumb',transform=transform_train)
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=1, shuffle=True, num_workers=1)
 
+class_num = len(trainset.classes)
+
 testset = torchvision.datasets.ImageFolder(root='/home/koma/dataset/animeface/animeface-character-dataset/thumb',transform=None, target_transform=None)
 testloader = torch.utils.data.DataLoader(trainset, batch_size=5, shuffle=True, num_workers=2)
 #testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
@@ -72,7 +74,7 @@ if args.resume:
     start_epoch = checkpoint['epoch']
 else:
     print('==> Building model..')
-    net = ResNet34()
+    net = ResNet34(class_num)
 
 if use_cuda:
     net.cuda()

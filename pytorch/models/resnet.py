@@ -1,3 +1,4 @@
+from IPython.terminal.debugger import set_trace as keyboard
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -69,6 +70,7 @@ class ResNet(nn.Module):
         self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2)
         self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
         self.linear = nn.Linear(512*block.expansion, num_classes)
+        print("num_classes = " + str(num_classes))
 
     def _make_layer(self, block, planes, num_blocks, stride):
         strides = [stride] + [1]*(num_blocks-1)
@@ -80,6 +82,7 @@ class ResNet(nn.Module):
 
     def forward(self, x):
         out = F.relu(self.bn1(self.conv1(x)))
+        keyboard()
         out = self.layer1(out)
         out = self.layer2(out)
         out = self.layer3(out)
@@ -90,20 +93,20 @@ class ResNet(nn.Module):
         return out
 
 
-def ResNet18():
-    return ResNet(BasicBlock, [2,2,2,2])
+def ResNet18(class_num):
+    return ResNet(BasicBlock, [2,2,2,2], num_classes=class_num)
 
-def ResNet34():
-    return ResNet(BasicBlock, [3,4,6,3])
+def ResNet34(class_num):
+    return ResNet(BasicBlock, [3,4,6,3], num_classes=class_num)
 
-def ResNet50():
-    return ResNet(Bottleneck, [3,4,6,3])
+def ResNet50(class_num):
+    return ResNet(Bottleneck, [3,4,6,3], num_classes=class_num)
 
-def ResNet101():
-    return ResNet(Bottleneck, [3,4,23,3])
+def ResNet101(class_num):
+    return ResNet(Bottleneck, [3,4,23,3], num_classes=class_num)
 
-def ResNet152():
-    return ResNet(Bottleneck, [3,8,36,3])
+def ResNet152(class_num):
+    return ResNet(Bottleneck, [3,8,36,3], num_classes=class_num)
 
 
 def test():
