@@ -107,3 +107,5 @@ ENV/
 *.py~
 
 pytorch/data/
+
+pytorch/checkpoint/
