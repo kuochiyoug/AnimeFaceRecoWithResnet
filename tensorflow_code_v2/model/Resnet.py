@@ -35,11 +35,9 @@ class BottleNeckB:
         w = math.sqrt(2)
         with tf.variable_scope(name):
             self.conv1=Convolution2D('conv1',in_size, ch, 1, 1, pad='VALID', wscale=w, nobias=True)
-            #self.bn1=BatchNormalization('bn1',ch,dim=3),
             self.conv2=Convolution2D('conv2',ch, ch, 3, 1,pad='SAME', wscale=w, nobias=True)
-            #self.bn2=BatchNormalization('bn2',ch,dim=3),
             self.conv3=Convolution2D('conv3',ch, in_size, 1, 1, pad='VALID', wscale=w, nobias=True)
-            #self.bn3=BatchNormalization('bn3',in_size,dim=3)
+
 
     def __call__(self, x):
         #h = tf.nn.relu(self.bn1(self.conv1(x)))

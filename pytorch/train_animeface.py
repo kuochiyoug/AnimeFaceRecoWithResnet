@@ -15,7 +15,8 @@ import argparse
 from models import *
 from utils import progress_bar
 from torch.autograd import Variable
-from models.resnet import ResNet34
+from models.resnet2 import ResNet34
+#from models.resnet import ResNet34
 from models.resnet import ResNet18
 
 parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
@@ -51,12 +52,12 @@ transform_test = transforms.Compose([
 #trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform_train)
 #trainloader = torch.utils.data.DataLoader(trainset, batch_size=128, shuffle=True, num_workers=2)
 
-trainset = torchvision.datasets.ImageFolder(root='/home/koma/dataset/animeface/animeface-character-dataset/thumb',transform=transform_train)
-trainloader = torch.utils.data.DataLoader(trainset, batch_size=1, shuffle=True, num_workers=1)
+trainset = torchvision.datasets.ImageFolder(root='/home/baxter/dataset/animeface/animeface-character-dataset/thumb',transform=transform_train)
+trainloader = torch.utils.data.DataLoader(trainset, batch_size=50, shuffle=True, num_workers=1)
 
 class_num = len(trainset.classes)
 
-testset = torchvision.datasets.ImageFolder(root='/home/koma/dataset/animeface/animeface-character-dataset/thumb',transform=None, target_transform=None)
+testset = torchvision.datasets.ImageFolder(root='/home/baxter/dataset/animeface/animeface-character-dataset/thumb',transform=None, target_transform=None)
 testloader = torch.utils.data.DataLoader(trainset, batch_size=5, shuffle=True, num_workers=2)
 #testset = torchvision.datasets.CIFAR10(root='./data', train=False, download=True, transform=transform_test)
 #testloader = torch.utils.data.DataLoader(testset, batch_size=100, shuffle=False, num_workers=2)
@@ -74,7 +75,9 @@ if args.resume:
     start_epoch = checkpoint['epoch']
 else:
     print('==> Building model..')
+    #net = ResNet34(class_num)
     net = ResNet34(class_num)
+
 
 if use_cuda:
     net.cuda()
