@@ -65,7 +65,7 @@ class Block:
 
 
 class ResNet(BaseModel):
-    def __init__(self, name, in_channels,seed=1):
+    def __init__(self, name, in_channels,out_classes,seed=1):
         super(ResNet, self).__init__(name,seed)
         with tf.variable_scope(self.name):
             self.conv1 = Convolution2D('conv1',in_channels,64,7,stride=2,pad='VALID',nobias=False)
@@ -74,7 +74,7 @@ class ResNet(BaseModel):
             self.res3=Block('res3',4, 256, 128, 512, 2)
             self.res4=Block('res4',23, 512, 256, 1024, 2)
             self.res5=Block('res5',3, 1024, 512, 2048, 2)
-            self.fc=Linear('linear',2048, 146)
+            self.fc=Linear('linear',2048, out_classes)
         self.train = True
 
 
@@ -89,7 +89,7 @@ class ResNet(BaseModel):
         h = self.res5.forward(h)
         #h = tf.nn.avg_pool(h, ksize=[1,7,7,1], strides=1,padding='VALID')
         h = tf.layers.average_pooling2d(tf.nn.relu(h),pool_size=[3,3],strides=[2,2],padding='valid')
-        h = tf.layers.flatten(h)
+        h = tf.contrib.layers.flatten(h)
         h = self.fc(h)
         return h
 

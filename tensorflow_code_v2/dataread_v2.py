@@ -93,7 +93,7 @@ def preprocess_label(label_id_list,cat_list):
 
 
 
-folder="/home/baxter/dataset/animeface/animeface-character-dataset/thumb/"
+folder="/home/koma/dataset/animeface/animeface-character-dataset/thumb/"
 num_epochs=50
 seed=1234
 batch_size=50
@@ -101,6 +101,7 @@ batch_size=50
 # Reads pfathes of images together with their labels
 #image_list, label_list = read_labeled_image_list(filename)
 image_list, label_id_list, cat_list= read_labeled_image_list_from_folder(folder)
+class_num = len(cat_list)
 
 label_list = preprocess_label(label_id_list,cat_list)
 
@@ -129,22 +130,22 @@ image = preprocess_image(image)
 # Optional Image and Label Batching
 image_batch, label_batch = tf.train.batch([image, label],
                                           batch_size=batch_size)
-model = ResNet(name='ResNet',in_channels=3,seed=seed)
+model = ResNet(name='ResNet',in_channels=3,out_classes=class_num,seed=seed)
 model.train = True
 
 cfg = dict({
             'allow_soft_placement': False,
-            'log_device_placement': True,
+            'log_device_placement': False,
             'gpu_options': tf.GPUOptions()
         })
 config = tf.ConfigProto(**cfg)
 #config.gpu_options.allow_growth = True
 config.gpu_options.per_process_gpu_memory_fraction = 0.4
-#keyborad()
+
 with tf.device('/gpu:0'):
     pred_batch = model(image_batch)
     loss_tf = tf.losses.softmax_cross_entropy(label_batch,pred_batch)
-    #accuracy_tf = tf.metrics.accuracy(label,pred_batch)
+    accuracy_tf,accuracy_op = tf.metrics.accuracy(label_batch,pred_batch)
     #accuracy = tf.metr
     op = tf.train.AdamOptimizer()
     gradient = op.compute_gradients(loss_tf)
@@ -157,12 +158,16 @@ with tf.Session(config = config) as sess:
     sess.run(tf.local_variables_initializer())
     coord = tf.train.Coordinator()
     threads = tf.train.start_queue_runners(coord=coord)
+    print("="*20)
     print("iter loss accuracy")
     print("="*20)
     for i in range(10000):
-        _,loss= sess.run([train_op,loss_tf])
-        print i, loss
-        #imgplot = plt.imshow(final_image[0])
-
+        _,loss,acc= sess.run([train_op,loss_tf,accuracy_tf])
+        if i%10 == 0:
+            print i, loss, acc*100.
+            #imgplot = plt.imshow(final_image[0])
+            with open("./train_log.log","a") as f:
+                f.write(str(i)+","+str(loss)+","+str(acc*100.))
+                f.write("\n")
     coord.request_stop()
     coord.join(threads)

@@ -21,13 +21,13 @@ import numpy as np
 import glob,os
 
 parser = argparse.ArgumentParser(description='Chainer CIFAR example:')
-parser.add_argument('--dataset', '-d', default='/home/koma/dataset/animeface-character-dataset/thumb/',
+parser.add_argument('--dataset', '-d', default='/home/koma/dataset/animeface/animeface-character-dataset/thumb/',
                 help='The path of dataset')
-parser.add_argument('--batchsize', '-b', type=int, default=64,
+parser.add_argument('--batchsize', '-b', type=int, default=50,
                 help='Number of images in each mini-batch')
 #parser.add_argument('--learnrate', '-l', type=float, default=0.05, help='Learning rate for SGD')
-parser.add_argument('--alpha1',  type=float, default=0.005, help='Learning rate for SGD')
-parser.add_argument('--epoch', '-e', type=int, default=300,
+parser.add_argument('--alpha1',  type=float, default=0.001, help='Learning rate for Adam')
+parser.add_argument('--epoch', '-e', type=int, default=200,
                 help='Number of sweeps over the dataset to train')
 parser.add_argument('--gpu', '-g', type=int, default=0,
                 help='GPU ID (negative value indicates CPU)')
@@ -136,9 +136,13 @@ while(train_iter.epoch < epochnum):
     t = chainer.Variable(t_array)
     optimizer.update(model, x, t)
 
+    if iteration%10 == 0:
+            print('iter:{}, loss: {}, accuracy: {}%'.format(
+                    iteration,model.loss.data,int(model.accuracy.data*100)))
+            with open("./train_log.log","a") as f:
+                f.write(str(iteration)+","+str(model.loss.data)+","+str(model.accuracy.data*100))
+                f.write("\n")
 
-    print('iter:{}, loss: {}, accuracy: {}%'.format(
-            iteration,model.loss.data,int(model.accuracy.data*100)))
 
     sum_loss += float(model.loss.data) * len(t.data)
     sum_accuracy += float(model.accuracy.data) * len(t.data)
