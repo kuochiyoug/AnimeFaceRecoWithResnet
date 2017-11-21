@@ -92,8 +92,8 @@ def preprocess_label(label_id_list,cat_list):
     return label_list
 
 
-
-folder="/home/koma/dataset/animeface/animeface-character-dataset/thumb/"
+folder="/home/baxter/dataset/animeface/animeface-character-dataset/thumb/"
+#folder="/home/koma/dataset/animeface/animeface-character-dataset/thumb/"
 num_epochs=50
 seed=1234
 batch_size=50
@@ -134,7 +134,7 @@ model = ResNet(name='ResNet',in_channels=3,out_classes=class_num,seed=seed)
 model.train = True
 
 cfg = dict({
-            'allow_soft_placement': False,
+            'allow_soft_placement': True,
             'log_device_placement': False,
             'gpu_options': tf.GPUOptions()
         })
@@ -143,9 +143,11 @@ config = tf.ConfigProto(**cfg)
 config.gpu_options.per_process_gpu_memory_fraction = 0.4
 
 with tf.device('/gpu:0'):
-    pred_batch = model(image_batch)
+    pred_batch = model(image_batch) #Linear Forwar
     loss_tf = tf.losses.softmax_cross_entropy(label_batch,pred_batch)
-    accuracy_tf,accuracy_op = tf.metrics.accuracy(label_batch,pred_batch)
+    #accuracy_tf,accuracy_op = tf.metrics.accuracy(label_batch,pred_batch)
+    recog_batch = tf.equal(tf.argmax(pred_batch, 1), tf.argmax(label_batch, 1))
+    accuracy_tf = tf.reduce_mean(tf.cast(recog_batch, "float"))
     #accuracy = tf.metr
     op = tf.train.AdamOptimizer()
     gradient = op.compute_gradients(loss_tf)
@@ -162,6 +164,7 @@ with tf.Session(config = config) as sess:
     print("iter loss accuracy")
     print("="*20)
     for i in range(10000):
+        image_batche_value = sess.run([image_batch])
         _,loss,acc= sess.run([train_op,loss_tf,accuracy_tf])
         if i%10 == 0:
             print i, loss, acc*100.

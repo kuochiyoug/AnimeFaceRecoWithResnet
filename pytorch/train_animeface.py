@@ -45,7 +45,7 @@ transform_train = transforms.Compose([
 #trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform_train)
 #trainloader = torch.utils.data.DataLoader(trainset, batch_size=128, shuffle=True, num_workers=2)
 batch_size=50
-trainset = torchvision.datasets.ImageFolder(root='/home/koma/dataset/animeface/animeface-character-dataset/thumb',transform=transform_train)
+trainset = torchvision.datasets.ImageFolder(root='/home/baxter/dataset/animeface/animeface-character-dataset/thumb',transform=transform_train)
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=1)
 
 class_num = len(trainset.classes)
@@ -93,15 +93,14 @@ for epoch in range(epoch_num):
         loss.backward()
         optimizer.step()
 
-        #train_loss += loss.data[0]
         _, predicted = torch.max(outputs.data, 1)
-        #total += targets.size(0)
         correct = predicted.eq(targets.data).cpu().sum()
+
         if iteration%10 == 0:
-            print (str(iteration)+" "+ str(loss.data[0])+" ",str(float(correct)/batch_size*100))
+            print (str(iteration)+" "+ str(loss.data[0])+" ",str(float(correct)/batch_size*100.))
             #imgplot = plt.imshow(final_image[0])
             with open("./train_log.log","a") as f:
-                f.write(str(iteration)+","+str(loss.data[0])+","+str(float(correct)/batch_size*100))
+                f.write(str(iteration)+","+str(loss.data[0])+","+str(float(correct)/batch_size*100.))
                 f.write("\n")
         iteration += 1
         if iteration == 10000:
