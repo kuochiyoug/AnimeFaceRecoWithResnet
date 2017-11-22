@@ -1,5 +1,5 @@
 from __future__ import print_function
-
+from IPython.terminal.debugger import set_trace as keyboard
 import torch
 import torch.nn as nn
 import torch.optim as optim
@@ -100,6 +100,7 @@ def train(epoch):
         loss = criterion(outputs, targets)
         loss.backward()
         optimizer.step()
+        keyboard()
 
         train_loss += loss.data[0]
         _, predicted = torch.max(outputs.data, 1)

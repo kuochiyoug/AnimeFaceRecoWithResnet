@@ -5,6 +5,7 @@ import torch.nn as nn
 import torch.optim as optim
 import torch.nn.functional as F
 import torch.backends.cudnn as cudnn
+import time
 
 import torchvision
 import torchvision.transforms as transforms
@@ -45,7 +46,7 @@ transform_train = transforms.Compose([
 #trainset = torchvision.datasets.CIFAR10(root='./data', train=True, download=True, transform=transform_train)
 #trainloader = torch.utils.data.DataLoader(trainset, batch_size=128, shuffle=True, num_workers=2)
 batch_size=50
-trainset = torchvision.datasets.ImageFolder(root='/home/baxter/dataset/animeface/animeface-character-dataset/thumb',transform=transform_train)
+trainset = torchvision.datasets.ImageFolder(root='/home/koma/dataset/animeface/animeface-character-dataset/thumb',transform=transform_train)
 trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True, num_workers=1)
 
 class_num = len(trainset.classes)
@@ -66,22 +67,25 @@ if use_cuda:
 
 
 criterion = nn.CrossEntropyLoss()
-#optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
-optimizer = optim.Adam(net.parameters(),lr=args.lr)
+optimizer = optim.SGD(net.parameters(), lr=args.lr, momentum=0.9, weight_decay=5e-4)
+#optimizer = optim.Adam(net.parameters(),lr=args.lr)
 print("Optimizer Setup Finish")
 
 
 epoch_num =200
 # Training
 
+printiter=10
+
 #keyboard()
 iteration = 0
 for epoch in range(epoch_num):
     print('\nEpoch: %d' % epoch)
-    net.train()
+    #net.train()
     train_loss = 0
     correct = 0
     total = 0
+    last_time = time.time()
     for batch_idx, (inputs, targets) in enumerate(trainloader):
             #keyboard()
         if use_cuda:
@@ -89,19 +93,28 @@ for epoch in range(epoch_num):
         optimizer.zero_grad()
         inputs, targets = Variable(inputs), Variable(targets)
         outputs = net(inputs)
+        a = list(net.parameters())[0]
         loss = criterion(outputs, targets)
         loss.backward()
+        b = list(net.parameters())[0]
+        print(str(torch.equal(a.data, b.data)))
+        keyboard()
         optimizer.step()
-
+        #keyboard()
+    
         _, predicted = torch.max(outputs.data, 1)
         correct = predicted.eq(targets.data).cpu().sum()
 
-        if iteration%10 == 0:
-            print (str(iteration)+" "+ str(loss.data[0])+" ",str(float(correct)/batch_size*100.))
+        if iteration%printiter == 0:
+            #print (str(iteration)+" "+ str(loss.data[0])+" ",str(float(correct)/batch_size*100.))
+            print('iter:{}, loss: {}, accuracy: {}%, time: {}s'.format(
+                    iteration,loss.data[0],int(float(correct)/batch_size*100.),time.time()-last_time))
             #imgplot = plt.imshow(final_image[0])
             with open("./train_log.log","a") as f:
                 f.write(str(iteration)+","+str(loss.data[0])+","+str(float(correct)/batch_size*100.))
                 f.write("\n")
+            print("Average time: "+str((time.time()-last_time)/printiter))
+            last_time = time.time()
         iteration += 1
         if iteration == 10000:
             break

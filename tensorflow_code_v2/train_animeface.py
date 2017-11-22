@@ -6,7 +6,7 @@ from tensorflow.python.framework import ops
 from tensorflow.python.framework import dtypes
 from PIL import Image
 from model.Resnet import ResNet
-
+import time
 
 
 def read_labeled_image_list_file(image_list_file):
@@ -92,9 +92,9 @@ def preprocess_label(label_id_list,cat_list):
     return label_list
 
 
-folder="/home/baxter/dataset/animeface/animeface-character-dataset/thumb/"
-#folder="/home/koma/dataset/animeface/animeface-character-dataset/thumb/"
-num_epochs=50
+#folder="/home/baxter/dataset/animeface/animeface-character-dataset/thumb/"
+folder="/home/koma/dataset/animeface/animeface-character-dataset/thumb/"
+num_epochs=100
 seed=1234
 batch_size=50
 
@@ -154,7 +154,7 @@ with tf.device('/gpu:0'):
     train_op = op.apply_gradients(gradient)
 
 
-
+printiter=10
 with tf.Session(config = config) as sess:
     sess.run(tf.global_variables_initializer())
     sess.run(tf.local_variables_initializer())
@@ -163,14 +163,19 @@ with tf.Session(config = config) as sess:
     print("="*20)
     print("iter loss accuracy")
     print("="*20)
+    last_time = time.time()
     for i in range(10000):
-        image_batche_value = sess.run([image_batch])
+        #image_batche_value = sess.run([image_batch])
         _,loss,acc= sess.run([train_op,loss_tf,accuracy_tf])
-        if i%10 == 0:
-            print i, loss, acc*100.
+        if i%printiter == 0:
+            #print i, loss, acc*100.
+            print('iter:{}, loss: {}, accuracy: {}%, time: {}s'.format(
+                    i,loss,int(acc*100.),time.time()-last_time))
             #imgplot = plt.imshow(final_image[0])
             with open("./train_log.log","a") as f:
                 f.write(str(i)+","+str(loss)+","+str(acc*100.))
                 f.write("\n")
+            print("Average time: "+str((time.time()-last_time)/printiter))
+            last_time = time.time()
     coord.request_stop()
     coord.join(threads)

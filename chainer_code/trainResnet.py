@@ -19,6 +19,7 @@ from chainer.datasets import tuple_dataset
 from PIL import Image
 import numpy as np
 import glob,os
+import time
 
 parser = argparse.ArgumentParser(description='Chainer CIFAR example:')
 parser.add_argument('--dataset', '-d', default='/home/koma/dataset/animeface/animeface-character-dataset/thumb/',
@@ -123,6 +124,8 @@ epochnum = args.epoch
 train_count = len(train)
 test_count = len(test)
 iteration = 0
+printiter = 10
+last_time = time.time()
 while(train_iter.epoch < epochnum):
     batch = train_iter.next()
     #print len(batch)
@@ -136,12 +139,16 @@ while(train_iter.epoch < epochnum):
     t = chainer.Variable(t_array)
     optimizer.update(model, x, t)
 
-    if iteration%10 == 0:
-            print('iter:{}, loss: {}, accuracy: {}%'.format(
-                    iteration,model.loss.data,int(model.accuracy.data*100)))
+    if iteration%printiter == 0:
+            #print('iter:{}, loss: {}, accuracy: {}%'.format(
+            #        iteration,model.loss.data,int(model.accuracy.data*100)))
+            print('iter:{}, loss: {}, accuracy: {}%, time: {}s'.format(
+                    iteration,model.loss.data,int(model.accuracy.data*100.),time.time()-last_time))
             with open("./train_log.log","a") as f:
                 f.write(str(iteration)+","+str(model.loss.data)+","+str(model.accuracy.data*100))
                 f.write("\n")
+            print("Average time: "+str((time.time()-last_time)/printiter))
+            last_time = time.time()
 
 
     sum_loss += float(model.loss.data) * len(t.data)

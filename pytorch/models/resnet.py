@@ -31,7 +31,6 @@ class BasicBlock(nn.Module):
         return out
 
 
-
 class Bottleneck(nn.Module):
     expansion = 4
 
@@ -114,4 +113,3 @@ def test():
     net = ResNet18()
     y = net(Variable(torch.randn(1,3,32,32)))
     print(y.size())
-
