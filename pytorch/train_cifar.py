@@ -97,9 +97,13 @@ def train(epoch):
         optimizer.zero_grad()
         inputs, targets = Variable(inputs), Variable(targets)
         outputs = net(inputs)
+        a = list(net.parameters())[0]
+
         loss = criterion(outputs, targets)
         loss.backward()
         optimizer.step()
+        b = list(net.parameters())[0]
+        print(str(torch.equal(a.data, b.data)))
         keyboard()
 
         train_loss += loss.data[0]

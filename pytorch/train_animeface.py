@@ -81,7 +81,7 @@ printiter=10
 iteration = 0
 for epoch in range(epoch_num):
     print('\nEpoch: %d' % epoch)
-    #net.train()
+    net.train()
     train_loss = 0
     correct = 0
     total = 0
@@ -97,8 +97,8 @@ for epoch in range(epoch_num):
         loss = criterion(outputs, targets)
         loss.backward()
         b = list(net.parameters())[0]
-        print(str(torch.equal(a.data, b.data)))
-        keyboard()
+        #print(str(torch.equal(a.data, b.data)))
+        #keyboard()
         optimizer.step()
         #keyboard()
     
