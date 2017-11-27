@@ -8,7 +8,6 @@ from chainer import cuda
 from chainer import optimizers
 from chainer import training
 from chainer.training import extensions
-from chainer.cuda import cupy as xp
 from chainer.dataset import convert
 import six
 from six.moves import queue
@@ -22,7 +21,7 @@ import glob,os
 import time
 
 parser = argparse.ArgumentParser(description='Chainer CIFAR example:')
-parser.add_argument('--dataset', '-d', default='/home/koma/dataset/animeface/animeface-character-dataset/thumb/',
+parser.add_argument('--dataset', '-d', default='/home/baxter/dataset/animeface/animeface-character-dataset/thumb/',
                 help='The path of dataset')
 parser.add_argument('--batchsize', '-b', type=int, default=50,
                 help='Number of images in each mini-batch')
@@ -30,7 +29,7 @@ parser.add_argument('--batchsize', '-b', type=int, default=50,
 parser.add_argument('--alpha1',  type=float, default=0.001, help='Learning rate for Adam')
 parser.add_argument('--epoch', '-e', type=int, default=200,
                 help='Number of sweeps over the dataset to train')
-parser.add_argument('--gpu', '-g', type=int, default=0,
+parser.add_argument('--gpu', '-g', type=int, default=-1,
                 help='GPU ID (negative value indicates CPU)')
 parser.add_argument('--out', '-o', default='result',
                 help='Directory to output the result')
@@ -52,8 +51,6 @@ print('')
 def data_manage_animefacedata(data_path,in_size=224):
     #Data path setup
 
-    #data_path = "/home/koma/dataset/animeface-character-dataset/thumb/"
-    #test_data_path = "/data/test/"
     folders = sorted(os.listdir(data_path))
     cats = []#Categorys list
     all_data = []
@@ -99,6 +96,7 @@ if args.gpu >= 0:
     cuda.check_cuda_available()
     cuda.get_device(0).use()
     model.to_gpu(0)
+    from chainer.cuda import cupy as xp
     print("Model Ready with GPU")
 else:
     print("Model Ready with CPU")
@@ -124,7 +122,7 @@ epochnum = args.epoch
 train_count = len(train)
 test_count = len(test)
 iteration = 0
-printiter = 10
+printiter = 1
 last_time = time.time()
 while(train_iter.epoch < epochnum):
     batch = train_iter.next()
@@ -137,11 +135,12 @@ while(train_iter.epoch < epochnum):
     x_array, t_array = convert.concat_examples(batch, args.gpu)
     x = chainer.Variable(x_array)
     t = chainer.Variable(t_array)
+
     optimizer.update(model, x, t)
 
+
+
     if iteration%printiter == 0:
-            #print('iter:{}, loss: {}, accuracy: {}%'.format(
-            #        iteration,model.loss.data,int(model.accuracy.data*100)))
             print('iter:{}, loss: {}, accuracy: {}%, time: {}s'.format(
                     iteration,model.loss.data,int(model.accuracy.data*100.),time.time()-last_time))
             with open("./train_log.log","a") as f:
