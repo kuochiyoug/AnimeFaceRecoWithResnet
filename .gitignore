@@ -109,3 +109,5 @@ ENV/
 pytorch/data/
 
 pytorch/checkpoint/
+
+AItrain_log_tf&chainer\.csv
